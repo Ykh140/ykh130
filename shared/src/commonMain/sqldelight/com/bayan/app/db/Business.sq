@@ -1,0 +1,21 @@
+-- Business.sq
+-- النشاط التجاري - يدعم مستقبلاً تعدد الأنشطة لنفس المستخدم (رجل أعمال)
+
+CREATE TABLE Business (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    ownerName TEXT,
+    phone TEXT,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    createdAt INTEGER NOT NULL
+);
+
+insertBusiness:
+INSERT INTO Business(id, name, ownerName, phone, currency, createdAt)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectAllBusinesses:
+SELECT * FROM Business ORDER BY createdAt ASC;
+
+selectBusinessById:
+SELECT * FROM Business WHERE id = ?;

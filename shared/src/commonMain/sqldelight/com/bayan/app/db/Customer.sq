@@ -1,0 +1,50 @@
+-- Customer.sq
+-- العملاء والموردون - type يحدد إن كان عميل أو مورد
+
+CREATE TABLE Customer (
+    id TEXT NOT NULL PRIMARY KEY,
+    businessId TEXT NOT NULL,
+    name TEXT NOT NULL,
+    phone TEXT,
+    type TEXT NOT NULL, -- 'customer' or 'supplier'
+    balance REAL NOT NULL DEFAULT 0.0, -- موجب = له، سالب = عليه
+    notes TEXT,
+    isDeleted INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+CREATE INDEX customer_business_idx ON Customer(businessId);
+
+insertCustomer:
+INSERT INTO Customer(id, businessId, name, phone, type, balance, notes, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, 0.0, ?, 0, ?, ?);
+
+updateCustomer:
+UPDATE Customer
+SET name = ?, phone = ?, notes = ?, updatedAt = ?
+WHERE id = ?;
+
+adjustBalance:
+UPDATE Customer
+SET balance = balance + ?, updatedAt = ?
+WHERE id = ?;
+
+softDeleteCustomer:
+UPDATE Customer
+SET isDeleted = 1, updatedAt = ?
+WHERE id = ?;
+
+selectAllByBusinessAndType:
+SELECT * FROM Customer
+WHERE businessId = ? AND type = ? AND isDeleted = 0
+ORDER BY name ASC;
+
+selectCustomerById:
+SELECT * FROM Customer
+WHERE id = ?;
+
+searchCustomers:
+SELECT * FROM Customer
+WHERE businessId = ? AND type = ? AND isDeleted = 0 AND name LIKE '%' || ? || '%'
+ORDER BY name ASC;
