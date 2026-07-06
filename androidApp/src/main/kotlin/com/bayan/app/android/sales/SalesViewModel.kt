@@ -2,7 +2,6 @@ package com.bayan.app.android.sales
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.InvoiceLine
 import com.bayan.app.domain.model.Party
 import com.bayan.app.domain.model.PartyType
@@ -23,7 +22,8 @@ data class CartLine(val product: Product, val quantity: Double) {
 class SalesViewModel(
     private val productRepository: ProductRepository,
     private val partyRepository: PartyRepository,
-    private val salesRepository: SalesRepository
+    private val salesRepository: SalesRepository,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _products = MutableStateFlow<List<Product>>(emptyList())
@@ -43,10 +43,10 @@ class SalesViewModel(
 
     init {
         viewModelScope.launch {
-            productRepository.observeProducts(DEFAULT_BUSINESS_ID).collect { _products.value = it }
+            productRepository.observeProducts(businessId).collect { _products.value = it }
         }
         viewModelScope.launch {
-            partyRepository.observeParties(DEFAULT_BUSINESS_ID, PartyType.CUSTOMER).collect { _customers.value = it }
+            partyRepository.observeParties(businessId, PartyType.CUSTOMER).collect { _customers.value = it }
         }
     }
 
@@ -92,7 +92,7 @@ class SalesViewModel(
                 )
             }
             salesRepository.createInvoice(
-                businessId = DEFAULT_BUSINESS_ID,
+                businessId = businessId,
                 customerId = _selectedCustomer.value?.id,
                 items = invoiceLines,
                 paymentMethod = paymentMethod

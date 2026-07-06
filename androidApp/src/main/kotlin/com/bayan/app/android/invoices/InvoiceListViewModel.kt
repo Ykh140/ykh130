@@ -2,7 +2,6 @@ package com.bayan.app.android.invoices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.Invoice
 import com.bayan.app.domain.repository.SalesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class InvoiceListViewModel(
-    private val salesRepository: SalesRepository
+    private val salesRepository: SalesRepository,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _invoices = MutableStateFlow<List<Invoice>>(emptyList())
@@ -23,7 +23,7 @@ class InvoiceListViewModel(
 
     init {
         viewModelScope.launch {
-            salesRepository.observeInvoices(DEFAULT_BUSINESS_ID).collect { list ->
+            salesRepository.observeInvoices(businessId).collect { list ->
                 _invoices.value = list
             }
         }

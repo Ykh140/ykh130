@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,12 +14,21 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel) {
+fun DashboardScreen(viewModel: DashboardViewModel, onSignOut: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
     var showAddExpense by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("لوحة التحكم") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("لوحة التحكم") },
+                actions = {
+                    IconButton(onClick = onSignOut) {
+                        Icon(Icons.Filled.ExitToApp, contentDescription = "تسجيل الخروج")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAddExpense = true },

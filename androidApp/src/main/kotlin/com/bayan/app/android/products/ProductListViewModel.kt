@@ -11,11 +11,9 @@ import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-// Business ثابت مؤقتًا للـ MVP (نشاط تجاري واحد فقط حاليًا)
-const val DEFAULT_BUSINESS_ID = "default-business"
-
 class ProductListViewModel(
-    private val repository: ProductRepository
+    private val repository: ProductRepository,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _products = MutableStateFlow<List<Product>>(emptyList())
@@ -23,7 +21,7 @@ class ProductListViewModel(
 
     init {
         viewModelScope.launch {
-            repository.observeProducts(DEFAULT_BUSINESS_ID).collect { list ->
+            repository.observeProducts(businessId).collect { list ->
                 _products.value = list
             }
         }
@@ -43,7 +41,7 @@ class ProductListViewModel(
             repository.addProduct(
                 Product(
                     id = Uuid.random().toString(),
-                    businessId = DEFAULT_BUSINESS_ID,
+                    businessId = businessId,
                     name = name,
                     barcode = barcode,
                     internalCode = null,

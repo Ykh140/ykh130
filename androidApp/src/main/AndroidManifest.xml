@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- لازمة للمصادقة والمزامنة مع Supabase؛ التطبيق يبقى يشتغل بدون نت لكل الوظائف المحلية -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="Bayan"
         android:icon="@mipmap/ic_launcher"

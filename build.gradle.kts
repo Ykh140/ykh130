@@ -1,6 +1,8 @@
 plugins {
     // Kotlin Multiplatform
     kotlin("multiplatform") version "1.9.24" apply false
+    // Kotlinx Serialization - لازم لـ Supabase-kt (تسلسل JSON لطلبات Auth/Postgrest)
+    kotlin("plugin.serialization") version "1.9.24" apply false
     // Compose Multiplatform
     id("org.jetbrains.compose") version "1.6.11" apply false
     // Android

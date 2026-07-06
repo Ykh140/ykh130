@@ -2,7 +2,6 @@ package com.bayan.app.android.expenses
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.Expense
 import com.bayan.app.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +16,8 @@ val SUGGESTED_EXPENSE_CATEGORIES = listOf("إيجار", "كهرباء وماء",
 const val ALL_CATEGORIES = "الكل"
 
 class ExpensesViewModel(
-    private val repository: ExpenseRepository
+    private val repository: ExpenseRepository,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _allExpenses = MutableStateFlow<List<Expense>>(emptyList())
@@ -33,7 +33,7 @@ class ExpensesViewModel(
 
     init {
         viewModelScope.launch {
-            repository.observeExpenses(DEFAULT_BUSINESS_ID).collect { list ->
+            repository.observeExpenses(businessId).collect { list ->
                 _allExpenses.value = list
                 recomputeCategories()
                 applyFilter()
@@ -48,7 +48,7 @@ class ExpensesViewModel(
 
     fun addExpense(amount: Double, category: String?, note: String?) {
         viewModelScope.launch {
-            repository.addExpense(DEFAULT_BUSINESS_ID, amount, category, note)
+            repository.addExpense(businessId, amount, category, note)
         }
     }
 

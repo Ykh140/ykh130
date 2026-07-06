@@ -2,7 +2,6 @@ package com.bayan.app.android.parties
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.Party
 import com.bayan.app.domain.model.PartyType
 import com.bayan.app.domain.model.StatementEntry
@@ -17,7 +16,8 @@ import kotlin.uuid.Uuid
 
 class PartyListViewModel(
     private val repository: PartyRepository,
-    private val type: PartyType
+    private val type: PartyType,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _parties = MutableStateFlow<List<Party>>(emptyList())
@@ -34,7 +34,7 @@ class PartyListViewModel(
 
     init {
         viewModelScope.launch {
-            repository.observeParties(DEFAULT_BUSINESS_ID, type).collect { list ->
+            repository.observeParties(businessId, type).collect { list ->
                 _parties.value = list
                 // إبقاء الطرف المفتوح محدّثًا (مثلاً بعد تغيّر رصيده)
                 _selectedParty.value?.let { current ->
@@ -50,7 +50,7 @@ class PartyListViewModel(
             repository.addParty(
                 Party(
                     id = Uuid.random().toString(),
-                    businessId = DEFAULT_BUSINESS_ID,
+                    businessId = businessId,
                     name = name,
                     phone = phone,
                     type = type,
@@ -93,7 +93,7 @@ class PartyListViewModel(
     fun recordPayment(amount: Double, isCredit: Boolean, note: String?) {
         val partyId = _selectedParty.value?.id ?: return
         viewModelScope.launch {
-            repository.recordPayment(DEFAULT_BUSINESS_ID, partyId, amount, isCredit, note)
+            repository.recordPayment(businessId, partyId, amount, isCredit, note)
         }
     }
 }

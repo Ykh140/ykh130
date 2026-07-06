@@ -2,7 +2,6 @@ package com.bayan.app.android.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.Product
 import com.bayan.app.domain.repository.ExpenseRepository
 import com.bayan.app.domain.repository.PartyRepository
@@ -32,7 +31,8 @@ class DashboardViewModel(
     private val salesRepository: SalesRepository,
     private val expenseRepository: ExpenseRepository,
     private val partyRepository: PartyRepository,
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val businessId: String
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -46,11 +46,11 @@ class DashboardViewModel(
         viewModelScope.launch {
             val startOfDay = todayStartMillis()
 
-            val sales = salesRepository.getTodaySalesTotal(DEFAULT_BUSINESS_ID, startOfDay)
-            val profit = salesRepository.getTodayProfitTotal(DEFAULT_BUSINESS_ID, startOfDay)
-            val expenses = expenseRepository.getTodayExpensesTotal(DEFAULT_BUSINESS_ID, startOfDay)
-            val debt = partyRepository.getTotalCustomerDebt(DEFAULT_BUSINESS_ID)
-            val lowStock = productRepository.getLowStock(DEFAULT_BUSINESS_ID)
+            val sales = salesRepository.getTodaySalesTotal(businessId, startOfDay)
+            val profit = salesRepository.getTodayProfitTotal(businessId, startOfDay)
+            val expenses = expenseRepository.getTodayExpensesTotal(businessId, startOfDay)
+            val debt = partyRepository.getTotalCustomerDebt(businessId)
+            val lowStock = productRepository.getLowStock(businessId)
 
             _state.value = DashboardState(
                 todaySales = sales,
@@ -65,7 +65,7 @@ class DashboardViewModel(
 
     fun addExpense(amount: Double, category: String?, note: String?) {
         viewModelScope.launch {
-            expenseRepository.addExpense(DEFAULT_BUSINESS_ID, amount, category, note)
+            expenseRepository.addExpense(businessId, amount, category, note)
             refresh()
         }
     }
