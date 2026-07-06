@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,6 +26,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.bayan.app.android.dashboard.DashboardScreen
 import com.bayan.app.android.dashboard.DashboardViewModel
+import com.bayan.app.android.invoices.InvoiceListScreen
+import com.bayan.app.android.invoices.InvoiceListViewModel
 import com.bayan.app.android.parties.PartyListScreen
 import com.bayan.app.android.parties.PartyListViewModel
 import com.bayan.app.android.products.ProductListScreen
@@ -44,7 +47,7 @@ import com.bayan.app.domain.repository.ProductRepository
 import com.bayan.app.domain.repository.SalesRepository
 
 private enum class BayanTab(val label: String) {
-    DASHBOARD("الرئيسية"), SALES("بيع"), PRODUCTS("المنتجات"), CUSTOMERS("العملاء"), SUPPLIERS("الموردون")
+    DASHBOARD("الرئيسية"), SALES("بيع"), INVOICES("الفواتير"), PRODUCTS("المنتجات"), CUSTOMERS("العملاء"), SUPPLIERS("الموردون")
 }
 
 class MainActivity : ComponentActivity() {
@@ -69,6 +72,11 @@ class MainActivity : ComponentActivity() {
             viewModelFactory { SalesViewModel(productRepository, partyRepository, salesRepository) }
         )[SalesViewModel::class.java]
 
+        val invoiceListViewModel = ViewModelProvider(
+            this,
+            viewModelFactory { InvoiceListViewModel(salesRepository) }
+        )[InvoiceListViewModel::class.java]
+
         val productViewModel = ViewModelProvider(
             this,
             viewModelFactory { ProductListViewModel(productRepository) }
@@ -85,7 +93,14 @@ class MainActivity : ComponentActivity() {
         )["suppliers", PartyListViewModel::class.java]
 
         setContent {
-            BayanApp(dashboardViewModel, salesViewModel, productViewModel, customerViewModel, supplierViewModel)
+            BayanApp(
+                dashboardViewModel,
+                salesViewModel,
+                invoiceListViewModel,
+                productViewModel,
+                customerViewModel,
+                supplierViewModel
+            )
         }
     }
 }
@@ -101,6 +116,7 @@ private fun <T : ViewModel> viewModelFactory(create: () -> T) = object : ViewMod
 private fun BayanApp(
     dashboardViewModel: DashboardViewModel,
     salesViewModel: SalesViewModel,
+    invoiceListViewModel: InvoiceListViewModel,
     productViewModel: ProductListViewModel,
     customerViewModel: PartyListViewModel,
     supplierViewModel: PartyListViewModel
@@ -130,6 +146,12 @@ private fun BayanApp(
                             label = { Text(BayanTab.SALES.label) }
                         )
                         NavigationBarItem(
+                            selected = selectedTab == BayanTab.INVOICES,
+                            onClick = { selectedTab = BayanTab.INVOICES },
+                            icon = { Icon(Icons.Filled.ReceiptLong, contentDescription = null) },
+                            label = { Text(BayanTab.INVOICES.label) }
+                        )
+                        NavigationBarItem(
                             selected = selectedTab == BayanTab.PRODUCTS,
                             onClick = { selectedTab = BayanTab.PRODUCTS },
                             icon = { Icon(Icons.Filled.Inventory2, contentDescription = null) },
@@ -154,6 +176,7 @@ private fun BayanApp(
                     when (selectedTab) {
                         BayanTab.DASHBOARD -> DashboardScreen(dashboardViewModel)
                         BayanTab.SALES -> SalesScreen(salesViewModel)
+                        BayanTab.INVOICES -> InvoiceListScreen(invoiceListViewModel)
                         BayanTab.PRODUCTS -> ProductListScreen(productViewModel)
                         BayanTab.CUSTOMERS -> PartyListScreen(customerViewModel, PartyType.CUSTOMER)
                         BayanTab.SUPPLIERS -> PartyListScreen(supplierViewModel, PartyType.SUPPLIER)

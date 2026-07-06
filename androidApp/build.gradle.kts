@@ -38,4 +38,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.8")
     implementation("androidx.compose.material:material-icons-extended:1.6.8")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 }
