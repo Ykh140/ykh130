@@ -46,6 +46,11 @@ selectInvoiceById:
 SELECT * FROM Invoice
 WHERE id = ?;
 
+selectInvoicesByCustomer:
+SELECT * FROM Invoice
+WHERE customerId = ? AND isDeleted = 0
+ORDER BY createdAt DESC;
+
 sumSalesToday:
 SELECT COALESCE(SUM(totalAmount), 0.0) FROM Invoice
 WHERE businessId = ? AND isDeleted = 0 AND createdAt >= ?;

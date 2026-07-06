@@ -1,0 +1,23 @@
+-- Payment.sq
+-- حركات يدوية على حساب عميل/مورد (تسديد دين، دفعة، سلفة) لأغراض كشف الحساب
+
+CREATE TABLE Payment (
+    id TEXT NOT NULL PRIMARY KEY,
+    businessId TEXT NOT NULL,
+    partyId TEXT NOT NULL,
+    amount REAL NOT NULL, -- المبلغ الفعلي المتحرك (دائمًا موجب)
+    balanceDelta REAL NOT NULL, -- الأثر الفعلي على رصيد الطرف (نفس اصطلاح Customer.balance)
+    note TEXT,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE INDEX payment_party_idx ON Payment(partyId);
+
+insertPayment:
+INSERT INTO Payment(id, businessId, partyId, amount, balanceDelta, note, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectPaymentsByParty:
+SELECT * FROM Payment
+WHERE partyId = ?
+ORDER BY createdAt DESC;

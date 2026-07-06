@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.bayan.app.android.products.DEFAULT_BUSINESS_ID
 import com.bayan.app.domain.model.Party
 import com.bayan.app.domain.model.PartyType
+import com.bayan.app.domain.model.StatementEntry
 import com.bayan.app.domain.repository.PartyRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,10 +23,23 @@ class PartyListViewModel(
     private val _parties = MutableStateFlow<List<Party>>(emptyList())
     val parties: StateFlow<List<Party>> = _parties.asStateFlow()
 
+    // الطرف المفتوح حاليًا لعرض كشف حسابه (null = قائمة العملاء/الموردين)
+    private val _selectedParty = MutableStateFlow<Party?>(null)
+    val selectedParty: StateFlow<Party?> = _selectedParty.asStateFlow()
+
+    private val _statement = MutableStateFlow<List<StatementEntry>>(emptyList())
+    val statement: StateFlow<List<StatementEntry>> = _statement.asStateFlow()
+
+    private var statementJob: Job? = null
+
     init {
         viewModelScope.launch {
             repository.observeParties(DEFAULT_BUSINESS_ID, type).collect { list ->
                 _parties.value = list
+                // إبقاء الطرف المفتوح محدّثًا (مثلاً بعد تغيّر رصيده)
+                _selectedParty.value?.let { current ->
+                    _selectedParty.value = list.find { it.id == current.id }
+                }
             }
         }
     }
@@ -55,6 +70,30 @@ class PartyListViewModel(
     fun deleteParty(partyId: String) {
         viewModelScope.launch {
             repository.deleteParty(partyId)
+        }
+    }
+
+    fun openParty(party: Party) {
+        _selectedParty.value = party
+        statementJob?.cancel()
+        statementJob = viewModelScope.launch {
+            repository.observeStatement(party.id).collect { entries ->
+                _statement.value = entries
+            }
+        }
+    }
+
+    fun closeParty() {
+        statementJob?.cancel()
+        statementJob = null
+        _selectedParty.value = null
+        _statement.value = emptyList()
+    }
+
+    fun recordPayment(amount: Double, isCredit: Boolean, note: String?) {
+        val partyId = _selectedParty.value?.id ?: return
+        viewModelScope.launch {
+            repository.recordPayment(DEFAULT_BUSINESS_ID, partyId, amount, isCredit, note)
         }
     }
 }
