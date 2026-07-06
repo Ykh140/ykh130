@@ -75,6 +75,10 @@ class PartyRepositoryImpl(
             id = partyId
         )
     }
+
+    override suspend fun getTotalCustomerDebt(businessId: String): Double = withContext(ioDispatcher) {
+        queries.selectTotalDebt(businessId).executeAsOne()
+    }
 }
 
 private fun PartyType.toDbValue(): String = when (this) {

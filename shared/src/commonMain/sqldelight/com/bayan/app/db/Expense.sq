@@ -1,0 +1,27 @@
+-- Expense.sq
+-- المصروفات اليومية
+
+CREATE TABLE Expense (
+    id TEXT NOT NULL PRIMARY KEY,
+    businessId TEXT NOT NULL,
+    amount REAL NOT NULL,
+    category TEXT,
+    note TEXT,
+    isDeleted INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE INDEX expense_business_idx ON Expense(businessId);
+
+insertExpense:
+INSERT INTO Expense(id, businessId, amount, category, note, isDeleted, createdAt)
+VALUES (?, ?, ?, ?, ?, 0, ?);
+
+selectExpensesByBusiness:
+SELECT * FROM Expense
+WHERE businessId = ? AND isDeleted = 0
+ORDER BY createdAt DESC;
+
+sumExpensesToday:
+SELECT COALESCE(SUM(amount), 0.0) FROM Expense
+WHERE businessId = ? AND isDeleted = 0 AND createdAt >= ?;

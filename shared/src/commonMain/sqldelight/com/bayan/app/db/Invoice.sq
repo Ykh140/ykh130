@@ -49,3 +49,9 @@ WHERE id = ?;
 sumSalesToday:
 SELECT COALESCE(SUM(totalAmount), 0.0) FROM Invoice
 WHERE businessId = ? AND isDeleted = 0 AND createdAt >= ?;
+
+sumProfitToday:
+SELECT COALESCE(SUM((ii.unitPrice - ii.unitCost) * ii.quantity), 0.0)
+FROM InvoiceItem ii
+JOIN Invoice i ON ii.invoiceId = i.id
+WHERE i.businessId = ? AND i.isDeleted = 0 AND i.createdAt >= ?;

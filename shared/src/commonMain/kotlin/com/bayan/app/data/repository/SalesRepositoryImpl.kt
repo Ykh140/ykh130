@@ -122,6 +122,11 @@ class SalesRepositoryImpl(
         withContext(ioDispatcher) {
             db.invoiceQueries.sumSalesToday(businessId, startOfDayMillis).executeAsOne()
         }
+
+    override suspend fun getTodayProfitTotal(businessId: String, startOfDayMillis: Long): Double =
+        withContext(ioDispatcher) {
+            db.invoiceQueries.sumProfitToday(businessId, startOfDayMillis).executeAsOne()
+        }
 }
 
 private fun PaymentMethod.toDbValue(): String = when (this) {

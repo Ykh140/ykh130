@@ -22,4 +22,5 @@ interface SalesRepository {
     fun observeInvoices(businessId: String): Flow<List<Invoice>>
     suspend fun getInvoiceWithItems(invoiceId: String): Invoice?
     suspend fun getTodaySalesTotal(businessId: String, startOfDayMillis: Long): Double
+    suspend fun getTodayProfitTotal(businessId: String, startOfDayMillis: Long): Double
 }

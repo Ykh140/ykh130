@@ -48,3 +48,8 @@ searchCustomers:
 SELECT * FROM Customer
 WHERE businessId = ? AND type = ? AND isDeleted = 0 AND name LIKE '%' || ? || '%'
 ORDER BY name ASC;
+
+selectTotalDebt:
+SELECT COALESCE(SUM(CASE WHEN balance < 0 THEN -balance ELSE 0 END), 0.0)
+FROM Customer
+WHERE businessId = ? AND type = 'customer' AND isDeleted = 0;

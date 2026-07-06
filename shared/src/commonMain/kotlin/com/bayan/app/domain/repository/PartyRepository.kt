@@ -12,4 +12,5 @@ interface PartyRepository {
     suspend fun updateParty(party: Party)
     suspend fun adjustBalance(partyId: String, delta: Double)
     suspend fun deleteParty(partyId: String)
+    suspend fun getTotalCustomerDebt(businessId: String): Double
 }
