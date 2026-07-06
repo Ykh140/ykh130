@@ -8,23 +8,32 @@ CREATE TABLE Expense (
     category TEXT,
     note TEXT,
     isDeleted INTEGER NOT NULL DEFAULT 0,
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
 );
 
 CREATE INDEX expense_business_idx ON Expense(businessId);
 
 insertExpense:
-INSERT INTO Expense(id, businessId, amount, category, note, isDeleted, createdAt)
-VALUES (?, ?, ?, ?, ?, 0, ?);
+INSERT INTO Expense(id, businessId, amount, category, note, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, 0, ?, ?);
+
+-- تُستخدم فقط من طبقة المزامنة لدمج صف قادم من Supabase (يستبدل الصف كاملاً محليًا)
+upsertFromRemote:
+INSERT OR REPLACE INTO Expense(id, businessId, amount, category, note, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 selectExpensesByBusiness:
 SELECT * FROM Expense
 WHERE businessId = ? AND isDeleted = 0
 ORDER BY createdAt DESC;
 
+selectExpenseById:
+SELECT * FROM Expense WHERE id = ?;
+
 softDeleteExpense:
 UPDATE Expense
-SET isDeleted = 1
+SET isDeleted = 1, updatedAt = ?
 WHERE id = ?;
 
 sumExpensesToday:

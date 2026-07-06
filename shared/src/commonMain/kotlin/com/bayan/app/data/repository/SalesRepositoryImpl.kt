@@ -2,6 +2,8 @@ package com.bayan.app.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.bayan.app.data.sync.SyncTables
+import com.bayan.app.data.sync.enqueueSync
 import com.bayan.app.db.BayanDatabase
 import com.bayan.app.domain.model.Invoice
 import com.bayan.app.domain.model.InvoiceLine
@@ -40,8 +42,10 @@ class SalesRepositoryImpl(
                 customerId = customerId,
                 totalAmount = total,
                 paymentMethod = paymentMethod.toDbValue(),
-                createdAt = now
+                createdAt = now,
+                updatedAt = now
             )
+            db.enqueueSync(SyncTables.INVOICE, invoiceId, now)
 
             items.forEach { line ->
                 db.invoiceQueries.insertInvoiceItem(
@@ -62,6 +66,7 @@ class SalesRepositoryImpl(
                         updatedAt = now,
                         id = line.productId
                     )
+                    db.enqueueSync(SyncTables.PRODUCT, line.productId, now)
                 }
             }
 
@@ -72,6 +77,7 @@ class SalesRepositoryImpl(
                     updatedAt = now,
                     id = customerId
                 )
+                db.enqueueSync(SyncTables.CUSTOMER, customerId, now)
             }
         }
 

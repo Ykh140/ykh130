@@ -20,6 +20,11 @@ insertCustomer:
 INSERT INTO Customer(id, businessId, name, phone, type, balance, notes, isDeleted, createdAt, updatedAt)
 VALUES (?, ?, ?, ?, ?, 0.0, ?, 0, ?, ?);
 
+-- تُستخدم فقط من طبقة المزامنة لدمج صف قادم من Supabase (يستبدل الصف كاملاً محليًا)
+upsertFromRemote:
+INSERT OR REPLACE INTO Customer(id, businessId, name, phone, type, balance, notes, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 updateCustomer:
 UPDATE Customer
 SET name = ?, phone = ?, notes = ?, updatedAt = ?

@@ -2,6 +2,8 @@
 
     <!-- لازمة للمصادقة والمزامنة مع Supabase؛ التطبيق يبقى يشتغل بدون نت لكل الوظائف المحلية -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- لمعرفة حالة الاتصال فورًا (وايفاي/بيانات/بدون اتصال) لتشغيل المزامنة تلقائيًا -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="Bayan"

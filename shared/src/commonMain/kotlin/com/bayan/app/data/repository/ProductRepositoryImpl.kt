@@ -2,6 +2,8 @@ package com.bayan.app.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.bayan.app.data.sync.SyncTables
+import com.bayan.app.data.sync.enqueueSync
 import com.bayan.app.db.BayanDatabase
 import com.bayan.app.domain.model.Product
 import com.bayan.app.domain.repository.ProductRepository
@@ -47,55 +49,70 @@ class ProductRepositoryImpl(
 
     override suspend fun addProduct(product: Product) = withContext(ioDispatcher) {
         val now = Clock.System.now().toEpochMilliseconds()
-        queries.insertProduct(
-            id = product.id,
-            businessId = product.businessId,
-            name = product.name,
-            barcode = product.barcode,
-            internalCode = product.internalCode,
-            category = product.category,
-            unit = product.unit,
-            purchasePrice = product.purchasePrice,
-            salePrice = product.salePrice,
-            quantity = product.quantity,
-            lowStockThreshold = product.lowStockThreshold,
-            imagePath = product.imagePath,
-            createdAt = now,
-            updatedAt = now
-        )
+        db.transaction {
+            queries.insertProduct(
+                id = product.id,
+                businessId = product.businessId,
+                name = product.name,
+                barcode = product.barcode,
+                internalCode = product.internalCode,
+                category = product.category,
+                unit = product.unit,
+                purchasePrice = product.purchasePrice,
+                salePrice = product.salePrice,
+                quantity = product.quantity,
+                lowStockThreshold = product.lowStockThreshold,
+                imagePath = product.imagePath,
+                createdAt = now,
+                updatedAt = now
+            )
+            db.enqueueSync(SyncTables.PRODUCT, product.id, now)
+        }
     }
 
     override suspend fun updateProduct(product: Product) = withContext(ioDispatcher) {
-        queries.updateProduct(
-            name = product.name,
-            barcode = product.barcode,
-            internalCode = product.internalCode,
-            category = product.category,
-            unit = product.unit,
-            purchasePrice = product.purchasePrice,
-            salePrice = product.salePrice,
-            quantity = product.quantity,
-            lowStockThreshold = product.lowStockThreshold,
-            imagePath = product.imagePath,
-            updatedAt = Clock.System.now().toEpochMilliseconds(),
-            id = product.id
-        )
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.updateProduct(
+                name = product.name,
+                barcode = product.barcode,
+                internalCode = product.internalCode,
+                category = product.category,
+                unit = product.unit,
+                purchasePrice = product.purchasePrice,
+                salePrice = product.salePrice,
+                quantity = product.quantity,
+                lowStockThreshold = product.lowStockThreshold,
+                imagePath = product.imagePath,
+                updatedAt = now,
+                id = product.id
+            )
+            db.enqueueSync(SyncTables.PRODUCT, product.id, now)
+        }
     }
 
     override suspend fun adjustQuantity(productId: String, newQuantity: Double) =
         withContext(ioDispatcher) {
-            queries.updateQuantity(
-                quantity = newQuantity,
-                updatedAt = Clock.System.now().toEpochMilliseconds(),
-                id = productId
-            )
+            val now = Clock.System.now().toEpochMilliseconds()
+            db.transaction {
+                queries.updateQuantity(
+                    quantity = newQuantity,
+                    updatedAt = now,
+                    id = productId
+                )
+                db.enqueueSync(SyncTables.PRODUCT, productId, now)
+            }
         }
 
     override suspend fun deleteProduct(productId: String) = withContext(ioDispatcher) {
-        queries.softDeleteProduct(
-            updatedAt = Clock.System.now().toEpochMilliseconds(),
-            id = productId
-        )
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.softDeleteProduct(
+                updatedAt = now,
+                id = productId
+            )
+            db.enqueueSync(SyncTables.PRODUCT, productId, now)
+        }
     }
 }
 

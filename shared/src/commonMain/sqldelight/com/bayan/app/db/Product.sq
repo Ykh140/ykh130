@@ -26,6 +26,11 @@ insertProduct:
 INSERT INTO Product(id, businessId, name, barcode, internalCode, category, unit, purchasePrice, salePrice, quantity, lowStockThreshold, imagePath, isDeleted, createdAt, updatedAt)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?);
 
+-- تُستخدم فقط من طبقة المزامنة لدمج صف قادم من Supabase (يستبدل الصف كاملاً محليًا)
+upsertFromRemote:
+INSERT OR REPLACE INTO Product(id, businessId, name, barcode, internalCode, category, unit, purchasePrice, salePrice, quantity, lowStockThreshold, imagePath, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 updateProduct:
 UPDATE Product
 SET name = ?, barcode = ?, internalCode = ?, category = ?, unit = ?, purchasePrice = ?, salePrice = ?, quantity = ?, lowStockThreshold = ?, imagePath = ?, updatedAt = ?

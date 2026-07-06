@@ -8,14 +8,23 @@ CREATE TABLE Payment (
     amount REAL NOT NULL, -- المبلغ الفعلي المتحرك (دائمًا موجب)
     balanceDelta REAL NOT NULL, -- الأثر الفعلي على رصيد الطرف (نفس اصطلاح Customer.balance)
     note TEXT,
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
 );
 
 CREATE INDEX payment_party_idx ON Payment(partyId);
 
 insertPayment:
-INSERT INTO Payment(id, businessId, partyId, amount, balanceDelta, note, createdAt)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO Payment(id, businessId, partyId, amount, balanceDelta, note, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+-- تُستخدم فقط من طبقة المزامنة لدمج صف قادم من Supabase (السجل غير قابل للتعديل، فقط إدراج إن لم يوجد)
+upsertFromRemote:
+INSERT OR IGNORE INTO Payment(id, businessId, partyId, amount, balanceDelta, note, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+selectPaymentById:
+SELECT * FROM Payment WHERE id = ?;
 
 selectPaymentsByParty:
 SELECT * FROM Payment

@@ -2,6 +2,8 @@ package com.bayan.app.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.bayan.app.data.sync.SyncTables
+import com.bayan.app.data.sync.enqueueSync
 import com.bayan.app.db.BayanDatabase
 import com.bayan.app.domain.model.Expense
 import com.bayan.app.domain.repository.ExpenseRepository
@@ -31,14 +33,20 @@ class ExpenseRepositoryImpl(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun addExpense(businessId: String, amount: Double, category: String?, note: String?) =
         withContext(ioDispatcher) {
-            queries.insertExpense(
-                id = Uuid.random().toString(),
-                businessId = businessId,
-                amount = amount,
-                category = category,
-                note = note,
-                createdAt = Clock.System.now().toEpochMilliseconds()
-            )
+            val id = Uuid.random().toString()
+            val now = Clock.System.now().toEpochMilliseconds()
+            db.transaction {
+                queries.insertExpense(
+                    id = id,
+                    businessId = businessId,
+                    amount = amount,
+                    category = category,
+                    note = note,
+                    createdAt = now,
+                    updatedAt = now
+                )
+                db.enqueueSync(SyncTables.EXPENSE, id, now)
+            }
         }
 
     override suspend fun getTodayExpensesTotal(businessId: String, startOfDayMillis: Long): Double =
@@ -47,7 +55,11 @@ class ExpenseRepositoryImpl(
         }
 
     override suspend fun deleteExpense(expenseId: String) = withContext(ioDispatcher) {
-        queries.softDeleteExpense(id = expenseId)
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.softDeleteExpense(updatedAt = now, id = expenseId)
+            db.enqueueSync(SyncTables.EXPENSE, expenseId, now)
+        }
     }
 }
 

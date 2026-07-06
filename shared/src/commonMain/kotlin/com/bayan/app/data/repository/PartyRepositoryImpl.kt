@@ -2,6 +2,8 @@ package com.bayan.app.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.bayan.app.data.sync.SyncTables
+import com.bayan.app.data.sync.enqueueSync
 import com.bayan.app.db.BayanDatabase
 import com.bayan.app.domain.model.Party
 import com.bayan.app.domain.model.PartyType
@@ -44,41 +46,56 @@ class PartyRepositoryImpl(
 
     override suspend fun addParty(party: Party) = withContext(ioDispatcher) {
         val now = Clock.System.now().toEpochMilliseconds()
-        queries.insertCustomer(
-            id = party.id,
-            businessId = party.businessId,
-            name = party.name,
-            phone = party.phone,
-            type = party.type.toDbValue(),
-            notes = party.notes,
-            createdAt = now,
-            updatedAt = now
-        )
+        db.transaction {
+            queries.insertCustomer(
+                id = party.id,
+                businessId = party.businessId,
+                name = party.name,
+                phone = party.phone,
+                type = party.type.toDbValue(),
+                notes = party.notes,
+                createdAt = now,
+                updatedAt = now
+            )
+            db.enqueueSync(SyncTables.CUSTOMER, party.id, now)
+        }
     }
 
     override suspend fun updateParty(party: Party) = withContext(ioDispatcher) {
-        queries.updateCustomer(
-            name = party.name,
-            phone = party.phone,
-            notes = party.notes,
-            updatedAt = Clock.System.now().toEpochMilliseconds(),
-            id = party.id
-        )
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.updateCustomer(
+                name = party.name,
+                phone = party.phone,
+                notes = party.notes,
+                updatedAt = now,
+                id = party.id
+            )
+            db.enqueueSync(SyncTables.CUSTOMER, party.id, now)
+        }
     }
 
     override suspend fun adjustBalance(partyId: String, delta: Double) = withContext(ioDispatcher) {
-        queries.adjustBalance(
-            balance = delta,
-            updatedAt = Clock.System.now().toEpochMilliseconds(),
-            id = partyId
-        )
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.adjustBalance(
+                balance = delta,
+                updatedAt = now,
+                id = partyId
+            )
+            db.enqueueSync(SyncTables.CUSTOMER, partyId, now)
+        }
     }
 
     override suspend fun deleteParty(partyId: String) = withContext(ioDispatcher) {
-        queries.softDeleteCustomer(
-            updatedAt = Clock.System.now().toEpochMilliseconds(),
-            id = partyId
-        )
+        val now = Clock.System.now().toEpochMilliseconds()
+        db.transaction {
+            queries.softDeleteCustomer(
+                updatedAt = now,
+                id = partyId
+            )
+            db.enqueueSync(SyncTables.CUSTOMER, partyId, now)
+        }
     }
 
     override suspend fun getTotalCustomerDebt(businessId: String): Double = withContext(ioDispatcher) {
@@ -135,21 +152,25 @@ class PartyRepositoryImpl(
     ) = withContext(ioDispatcher) {
         val now = Clock.System.now().toEpochMilliseconds()
         val delta = if (isCredit) amount else -amount
+        val paymentId = Uuid.random().toString()
         db.transaction {
             db.paymentQueries.insertPayment(
-                id = Uuid.random().toString(),
+                id = paymentId,
                 businessId = businessId,
                 partyId = partyId,
                 amount = amount,
                 balanceDelta = delta,
                 note = note,
-                createdAt = now
+                createdAt = now,
+                updatedAt = now
             )
             queries.adjustBalance(
                 balance = delta,
                 updatedAt = now,
                 id = partyId
             )
+            db.enqueueSync(SyncTables.PAYMENT, paymentId, now)
+            db.enqueueSync(SyncTables.CUSTOMER, partyId, now)
         }
     }
 }

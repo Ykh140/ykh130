@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,8 @@ import com.bayan.app.data.repository.ExpenseRepositoryImpl
 import com.bayan.app.data.repository.PartyRepositoryImpl
 import com.bayan.app.data.repository.ProductRepositoryImpl
 import com.bayan.app.data.repository.SalesRepositoryImpl
+import com.bayan.app.data.sync.NetworkMonitor
+import com.bayan.app.data.sync.SyncEngine
 import com.bayan.app.db.BayanDatabase
 import com.bayan.app.domain.model.AuthState
 import com.bayan.app.domain.model.PartyType
@@ -84,6 +87,9 @@ class MainActivity : ComponentActivity() {
     private val salesRepository: SalesRepository by lazy { SalesRepositoryImpl(database) }
     private val expenseRepository: ExpenseRepository by lazy { ExpenseRepositoryImpl(database) }
     private val authRepository: AuthRepository by lazy { AuthRepositoryImpl() }
+    private val networkMonitor by lazy { NetworkMonitor(applicationContext) }
+    // نفس محرك المزامنة يُعاد استخدامه طول عمر الـ Activity؛ start() يُستدعى مرة واحدة بعد كل تسجيل دخول
+    private val syncEngine by lazy { SyncEngine(database, networkMonitor) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,7 +111,16 @@ class MainActivity : ComponentActivity() {
                             val viewModels = remember(state.user.businessId) {
                                 buildViewModels(state.user.businessId)
                             }
-                            BayanApp(viewModels, onSignOut = { authViewModel.signOut() })
+                            // تشغيل المزامنة مرة واحدة لكل حساب يسجّل دخول (رفع + سحب فوري، وبعدها تلقائي مع الشبكة)
+                            LaunchedEffect(state.user.businessId) {
+                                syncEngine.start(state.user.businessId)
+                            }
+                            val syncStatus by syncEngine.status.collectAsState()
+                            BayanApp(
+                                viewModels,
+                                syncStatus = syncStatus,
+                                onSignOut = { authViewModel.signOut() }
+                            )
                         }
                     }
                 }
@@ -178,6 +193,7 @@ private fun LoadingScreen() {
 @Composable
 private fun BayanApp(
     viewModels: BayanViewModels,
+    syncStatus: com.bayan.app.data.sync.SyncStatus,
     onSignOut: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(BayanTab.DASHBOARD) }
@@ -236,7 +252,7 @@ private fun BayanApp(
     ) { padding ->
         Surface(modifier = Modifier.fillMaxSize()) {
             when (selectedTab) {
-                BayanTab.DASHBOARD -> DashboardScreen(viewModels.dashboard, onSignOut = onSignOut)
+                BayanTab.DASHBOARD -> DashboardScreen(viewModels.dashboard, syncStatus = syncStatus, onSignOut = onSignOut)
                 BayanTab.SALES -> SalesScreen(viewModels.sales)
                 BayanTab.INVOICES -> InvoiceListScreen(viewModels.invoices)
                 BayanTab.EXPENSES -> ExpensesScreen(viewModels.expenses)

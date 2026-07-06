@@ -5,16 +5,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.bayan.app.data.sync.SyncStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel, onSignOut: () -> Unit = {}) {
+fun DashboardScreen(
+    viewModel: DashboardViewModel,
+    syncStatus: SyncStatus = SyncStatus.Idle,
+    onSignOut: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsState()
     var showAddExpense by remember { mutableStateOf(false) }
 
@@ -23,6 +33,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, onSignOut: () -> Unit = {}) {
             TopAppBar(
                 title = { Text("لوحة التحكم") },
                 actions = {
+                    SyncStatusIndicator(syncStatus)
                     IconButton(onClick = onSignOut) {
                         Icon(Icons.Filled.ExitToApp, contentDescription = "تسجيل الخروج")
                     }
@@ -105,6 +116,30 @@ fun DashboardScreen(viewModel: DashboardViewModel, onSignOut: () -> Unit = {}) {
                 showAddExpense = false
             }
         )
+    }
+}
+
+/** مؤشر بسيط بشريط العنوان: متزامن (أخضر) / جارِ الرفع (دوّار) / بدون اتصال (رمادي) / خطأ (أحمر) */
+@Composable
+private fun SyncStatusIndicator(status: SyncStatus) {
+    val (icon, tint, label) = when (status) {
+        is SyncStatus.Idle -> Triple(Icons.Filled.CheckCircle, Color(0xFF2E7D32), "متزامن")
+        is SyncStatus.Syncing -> Triple(null, MaterialTheme.colorScheme.primary, "جارِ الرفع")
+        is SyncStatus.Offline -> Triple(Icons.Filled.CloudOff, MaterialTheme.colorScheme.onSurfaceVariant, "بدون اتصال")
+        is SyncStatus.Error -> Triple(Icons.Filled.ErrorOutline, MaterialTheme.colorScheme.error, "تعذّرت المزامنة")
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 6.dp)
+    ) {
+        if (status is SyncStatus.Syncing) {
+            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+        } else if (icon != null) {
+            Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = tint.takeUnless { status is SyncStatus.Syncing } ?: MaterialTheme.colorScheme.primary)
     }
 }
 

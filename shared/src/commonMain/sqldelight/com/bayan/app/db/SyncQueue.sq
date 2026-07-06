@@ -1,0 +1,28 @@
+-- SyncQueue.sq
+-- قائمة انتظار الرفع (outbox pattern): أي تعديل محلي (إضافة/تحديث/حذف ناعم)
+-- يسجَّل هون، وطبقة المزامنة تقرأها وترفعها لـ Supabase لما يتوفر اتصال.
+-- تسجيل نفس (tableName, entityId) أكثر من مرة قبل الرفع يبقيه سطر واحد فقط
+-- (ما يهمنا غير آخر حالة للصف وقت الرفع).
+
+CREATE TABLE SyncQueue (
+    tableName TEXT NOT NULL,
+    entityId TEXT NOT NULL,
+    enqueuedAt INTEGER NOT NULL,
+    PRIMARY KEY (tableName, entityId)
+);
+
+enqueue:
+INSERT OR REPLACE INTO SyncQueue(tableName, entityId, enqueuedAt)
+VALUES (?, ?, ?);
+
+selectAllPending:
+SELECT * FROM SyncQueue ORDER BY enqueuedAt ASC;
+
+selectPendingByTable:
+SELECT * FROM SyncQueue WHERE tableName = ? ORDER BY enqueuedAt ASC;
+
+removeFromQueue:
+DELETE FROM SyncQueue WHERE tableName = ? AND entityId = ?;
+
+countPending:
+SELECT COUNT(*) FROM SyncQueue;

@@ -8,7 +8,8 @@ CREATE TABLE Invoice (
     totalAmount REAL NOT NULL,
     paymentMethod TEXT NOT NULL, -- 'cash' | 'transfer' | 'debt'
     isDeleted INTEGER NOT NULL DEFAULT 0,
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
 );
 
 CREATE TABLE InvoiceItem (
@@ -26,11 +27,21 @@ CREATE INDEX invoice_customer_idx ON Invoice(customerId);
 CREATE INDEX invoice_item_invoice_idx ON InvoiceItem(invoiceId);
 
 insertInvoice:
-INSERT INTO Invoice(id, businessId, customerId, totalAmount, paymentMethod, isDeleted, createdAt)
-VALUES (?, ?, ?, ?, ?, 0, ?);
+INSERT INTO Invoice(id, businessId, customerId, totalAmount, paymentMethod, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, 0, ?, ?);
+
+-- تُستخدم فقط من طبقة المزامنة لدمج صف قادم من Supabase
+upsertInvoiceFromRemote:
+INSERT OR REPLACE INTO Invoice(id, businessId, customerId, totalAmount, paymentMethod, isDeleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 insertInvoiceItem:
 INSERT INTO InvoiceItem(id, invoiceId, productId, productName, quantity, unitPrice, unitCost)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- بنود الفاتورة غير قابلة للتعديل، فقط تُدرج إذا لم تكن موجودة (تصل مع الفاتورة الأم عند السحب)
+upsertInvoiceItemFromRemote:
+INSERT OR IGNORE INTO InvoiceItem(id, invoiceId, productId, productName, quantity, unitPrice, unitCost)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 selectInvoicesByBusiness:

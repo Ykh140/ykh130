@@ -1,0 +1,15 @@
+-- SyncMeta.sq
+-- تخزين بسيط (key-value) لحالة المزامنة: آخر وقت سحب ناجح لكل جدول،
+-- وآخر وقت "نبضة" (ping) لمنع توقف مشروع Supabase المجاني بعد 7 أيام بدون نشاط.
+
+CREATE TABLE SyncMeta (
+    metaKey TEXT NOT NULL PRIMARY KEY,
+    metaValue TEXT NOT NULL
+);
+
+upsertMeta:
+INSERT OR REPLACE INTO SyncMeta(metaKey, metaValue)
+VALUES (?, ?);
+
+selectMeta:
+SELECT metaValue FROM SyncMeta WHERE metaKey = ?;
