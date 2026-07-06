@@ -22,6 +22,11 @@ SELECT * FROM Expense
 WHERE businessId = ? AND isDeleted = 0
 ORDER BY createdAt DESC;
 
+softDeleteExpense:
+UPDATE Expense
+SET isDeleted = 1
+WHERE id = ?;
+
 sumExpensesToday:
 SELECT COALESCE(SUM(amount), 0.0) FROM Expense
 WHERE businessId = ? AND isDeleted = 0 AND createdAt >= ?;

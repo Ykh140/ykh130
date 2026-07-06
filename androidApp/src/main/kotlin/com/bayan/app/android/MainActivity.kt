@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -26,6 +27,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.bayan.app.android.dashboard.DashboardScreen
 import com.bayan.app.android.dashboard.DashboardViewModel
+import com.bayan.app.android.expenses.ExpensesScreen
+import com.bayan.app.android.expenses.ExpensesViewModel
 import com.bayan.app.android.invoices.InvoiceListScreen
 import com.bayan.app.android.invoices.InvoiceListViewModel
 import com.bayan.app.android.parties.PartyListScreen
@@ -47,7 +50,7 @@ import com.bayan.app.domain.repository.ProductRepository
 import com.bayan.app.domain.repository.SalesRepository
 
 private enum class BayanTab(val label: String) {
-    DASHBOARD("الرئيسية"), SALES("بيع"), INVOICES("الفواتير"), PRODUCTS("المنتجات"), CUSTOMERS("العملاء"), SUPPLIERS("الموردون")
+    DASHBOARD("الرئيسية"), SALES("بيع"), INVOICES("الفواتير"), EXPENSES("المصروفات"), PRODUCTS("المنتجات"), CUSTOMERS("العملاء"), SUPPLIERS("الموردون")
 }
 
 class MainActivity : ComponentActivity() {
@@ -77,6 +80,11 @@ class MainActivity : ComponentActivity() {
             viewModelFactory { InvoiceListViewModel(salesRepository) }
         )[InvoiceListViewModel::class.java]
 
+        val expensesViewModel = ViewModelProvider(
+            this,
+            viewModelFactory { ExpensesViewModel(expenseRepository) }
+        )[ExpensesViewModel::class.java]
+
         val productViewModel = ViewModelProvider(
             this,
             viewModelFactory { ProductListViewModel(productRepository) }
@@ -97,6 +105,7 @@ class MainActivity : ComponentActivity() {
                 dashboardViewModel,
                 salesViewModel,
                 invoiceListViewModel,
+                expensesViewModel,
                 productViewModel,
                 customerViewModel,
                 supplierViewModel
@@ -117,6 +126,7 @@ private fun BayanApp(
     dashboardViewModel: DashboardViewModel,
     salesViewModel: SalesViewModel,
     invoiceListViewModel: InvoiceListViewModel,
+    expensesViewModel: ExpensesViewModel,
     productViewModel: ProductListViewModel,
     customerViewModel: PartyListViewModel,
     supplierViewModel: PartyListViewModel
@@ -152,6 +162,12 @@ private fun BayanApp(
                             label = { Text(BayanTab.INVOICES.label) }
                         )
                         NavigationBarItem(
+                            selected = selectedTab == BayanTab.EXPENSES,
+                            onClick = { selectedTab = BayanTab.EXPENSES },
+                            icon = { Icon(Icons.Filled.Payments, contentDescription = null) },
+                            label = { Text(BayanTab.EXPENSES.label) }
+                        )
+                        NavigationBarItem(
                             selected = selectedTab == BayanTab.PRODUCTS,
                             onClick = { selectedTab = BayanTab.PRODUCTS },
                             icon = { Icon(Icons.Filled.Inventory2, contentDescription = null) },
@@ -177,6 +193,7 @@ private fun BayanApp(
                         BayanTab.DASHBOARD -> DashboardScreen(dashboardViewModel)
                         BayanTab.SALES -> SalesScreen(salesViewModel)
                         BayanTab.INVOICES -> InvoiceListScreen(invoiceListViewModel)
+                        BayanTab.EXPENSES -> ExpensesScreen(expensesViewModel)
                         BayanTab.PRODUCTS -> ProductListScreen(productViewModel)
                         BayanTab.CUSTOMERS -> PartyListScreen(customerViewModel, PartyType.CUSTOMER)
                         BayanTab.SUPPLIERS -> PartyListScreen(supplierViewModel, PartyType.SUPPLIER)

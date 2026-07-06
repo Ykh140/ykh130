@@ -45,6 +45,10 @@ class ExpenseRepositoryImpl(
         withContext(ioDispatcher) {
             queries.sumExpensesToday(businessId, startOfDayMillis).executeAsOne()
         }
+
+    override suspend fun deleteExpense(expenseId: String) = withContext(ioDispatcher) {
+        queries.softDeleteExpense(id = expenseId)
+    }
 }
 
 private fun com.bayan.app.db.Expense.toDomain() = Expense(
